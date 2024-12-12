@@ -55,7 +55,10 @@ func main() {
 
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
 
-	mux.HandleFunc("POST /api/validate_chirp", apiCfg.validate)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.getAllChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getSingleChirp)
+
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 
 	server := &http.Server{
@@ -84,60 +87,6 @@ func cleanUp(body string) string {
 		}
 	}
 	return result
-}
-
-func (cfg *apiConfig) validate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	type returnVals struct {
-		// the key will be the name of struct field unless you give it an explicit JSON tag
-		Text string `json:"body"`
-	}
-	type cleanUpStr struct {
-		Text string `json:"cleaned_body"`
-	}
-
-	type returnValid struct {
-		// the key will be the name of struct field unless you give it an explicit JSON tag
-		Text bool `json:"valid"`
-	}
-	type returnError struct {
-		// the key will be the name of struct field unless you give it an explicit JSON tag
-		Text string `json:"error"`
-	}
-	error := returnError{Text: "Something went wrong"}
-	lenError := returnError{Text: "Chirp is too long"}
-	// validResponse := returnValid{Text: true}
-
-	decoder := json.NewDecoder(r.Body)
-	params := returnVals{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		data, err := json.Marshal(error)
-		if err != nil {
-			// w.Write(data)
-		}
-		w.Write(data)
-		// w.Write()
-	}
-	if len(params.Text) > 140 {
-		w.WriteHeader(400)
-		data, err := json.Marshal(lenError)
-		if err != nil {
-
-		}
-		w.Write(data)
-
-	} else {
-		w.WriteHeader(200)
-		data, err := json.Marshal(cleanUpStr{Text: cleanUp(params.Text)})
-		if err != nil {
-
-		}
-		w.Write(data)
-	}
-
-	// w.Write(json.Marshall(params))
 }
 
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
